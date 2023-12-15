@@ -415,12 +415,14 @@ func (u *unmarshalInfo) computeUnmarshalInfo() {
 	}
 
 	// Get extension ranges, if any.
-	fn := reflect.Zero(reflect.PtrTo(t)).MethodByName("ExtensionRangeArray")
-	if fn.IsValid() {
+	type ExtensionRangeArrayer interface {
+		ExtensionRangeArray() []ExtensionRange
+	}
+	if era, ok := reflect.Zero(reflect.PtrTo(t)).Interface().(ExtensionRangeArrayer); ok {
 		if !u.extensions.IsValid() && !u.oldExtensions.IsValid() && !u.bytesExtensions.IsValid() {
 			panic("a message with extensions, but no extensions field in " + t.Name())
 		}
-		u.extensionRanges = fn.Call(nil)[0].Interface().([]ExtensionRange)
+		u.extensionRanges = era.ExtensionRangeArray()
 	}
 
 	// Explicitly disallow tag 0. This will ensure we flag an error
